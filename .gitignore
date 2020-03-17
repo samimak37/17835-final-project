@@ -1,0 +1,5 @@
+transcripts/
+.vscode/
+venv/
+__pycache__/
+*.txt
