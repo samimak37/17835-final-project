@@ -3,3 +3,4 @@ transcripts/
 venv/
 __pycache__/
 *.txt
+.idea/
