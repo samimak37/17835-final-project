@@ -9,10 +9,16 @@ $ pip install -r requirements.txt
 
 NOTE: If you are using a Mac, it is probably necessary to call `pip3` instead of `pip`
 
-## Using the Webscraper - scaper.py
+## Directory Sturcture
+
+`misc`: Feel free to put experiments/in-progress code in , and once they are ready enough, move them to `scripts`. \
+`scripts`: Code that is 'ready enough' \
+`plots`:  Graphics that should go into the 5 page paper and/or the presentation board.
+
+## Using the Webscraper - scripts/scraper/scaper.py
 Once the dependencies are installed, all you should have to do is run `scraper.py`. This will create a new directory called `transcripts` that will house text files generated from all of the debates available from the UCSB site. Additionally, there will be a file in the base directory titled `transcript_links.txt` that will have direct links to the website for each of the transcripts.
 
-### Using the Webscraper - scraper_to_csv.py
+## Using the Webscraper - scripts/scraper/scraper_to_csv.py
 A new directory `data` will be created. There, a file called `debate_transcripts_v3.csv` will be placed. 
 Some software (e.g. excel) incorrectly loads the data by default, since some of the fields contain
 commas. The "Numbers" application that comes with macOS seems to open it fine.

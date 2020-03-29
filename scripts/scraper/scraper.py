@@ -4,11 +4,11 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-import scraper_util
+from scripts.scraper import scraper_util
 
 UCSB_SITE = 'https://www.presidency.ucsb.edu/documents/presidential-documents-archive-guidebook/presidential-candidates-debates-1960-2016'
 LINK_FILE = 'transcript_links.txt'
-TRANSCRIPT_DIRECTORY = Path('transcripts/')
+TRANSCRIPT_DIRECTORY = Path('../../data/transcripts/')
 
 if not os.path.exists(TRANSCRIPT_DIRECTORY):
     os.makedirs(TRANSCRIPT_DIRECTORY)

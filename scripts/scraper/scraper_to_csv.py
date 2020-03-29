@@ -1,14 +1,15 @@
 import urllib.request
 import os
-import scraper_util
+from scripts.scraper import scraper_util
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 
 UCSB_SITE = 'https://www.presidency.ucsb.edu/documents/presidential-documents' \
             '-archive-guidebook/presidential-candidates-debates-1960-2016'
-OUTPUT_DIRECTORY = "./data/"
+OUTPUT_DIRECTORY = "../../data/"
 OUTPUT_FILE = "debate_transcripts_v3.csv"
+
 
 def extract_transcript_text(link):
 
