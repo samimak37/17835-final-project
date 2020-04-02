@@ -8,6 +8,16 @@ $ pip install -r requirements.txt
 ```
 
 NOTE: If you are using a Mac, it is probably necessary to call `pip3` instead of `pip`
+## Ideal Workflow
+
+After cloning this repo onto your computer, make a branch for your edits.
+Once you have finished making edits, merge the remote master back into your local branch before
+you push your local branch to the remote repo. Then submit a pull request.
+
+The pull request should be able to automatically merge into master since you just merged master into your 
+current branch.
+
+If you changed someone else's file, ideally you should request a review before you merge.
 
 ## Directory Sturcture
 
