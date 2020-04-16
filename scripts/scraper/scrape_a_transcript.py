@@ -1,3 +1,74 @@
+import urllib.request
+import re
+from bs4 import BeautifulSoup
+
+#######################
+# Functions to parse the text in an individual transcript.
+#######################
+
+# Helper function
+# Returns all the text from a bs4 soup object
+def stringify_soup(soup):
+    if soup.string is not None:
+        return soup.string
+
+    text = ''
+    for child in soup.children:
+        text += stringify_soup(child)
+
+    return text
+
+# Helper function
+# Gets only the words spoken by participants
+def format_text(tag):
+
+    # Remove html tags
+    text = stringify_soup(tag)
+
+    # Remove things inside brackets. e.g. [applause], [laughter]
+    pattern = '\s\[.*?\]\s'
+    text = re.sub(pattern, '', text)
+
+    # Remove all characters up to first ':'.
+    text = re.sub('.*:', '', text)
+
+    # Replace new line characters with ' '
+    text = re.sub('\n', ' ', text)
+
+    return text
+
+# Helper function
+# Determines whether a tag should be skipped while parsing
+def skip_tag(tag):
+    try:
+        if tag.find('strong').text == 'PARTICIPANTS:':
+            return True
+    except AttributeError:
+        pass
+
+    try:
+        if tag.find('b').text == 'PARTICIPANTS:':
+            return True
+    except AttributeError:
+        pass
+
+    return False
+
+# Helper function
+# Determines whether there is a new speaker, and returns the name of the speaker if so,
+# otherwise returns '' for the name.
+def is_new_speaker(tag):
+    speaker_name = ""
+    new_speaker = True if tag.find('strong') else False
+    if new_speaker:
+        speaker_name = tag.find('strong').text[:-1].lower()
+    else:
+        new_speaker = True if tag.find('b') else False
+        if new_speaker:
+            speaker_name = tag.find('b').text[:-1].lower()
+
+    return new_speaker, speaker_name
+
 def extract_transcript_text(link):
 
     """
@@ -8,57 +79,6 @@ def extract_transcript_text(link):
     In each tuple, the first element is the speaker (e.g. transcript_text[i][0]), and
      the second element is the text (e.g. transcript_text[i][1]).
     """
-
-    # Helper function to determine whether a tag should be skipped while parsing
-    def skip_tag(tag):
-
-        try:
-            if tag.find('strong').text == 'PARTICIPANTS:':
-                return True
-        except AttributeError:
-            pass
-
-        try:
-            if tag.find('b').text == 'PARTICIPANTS:':
-                return True
-        except AttributeError:
-            pass
-
-        return False
-
-    # Helper function to determine whether there is a new speaker, and returns the name of the speaker if so,
-    # otherwise returns '' for the name.
-    def is_new_speaker(tag):
-
-        speaker_name = ""
-        new_speaker = True if tag.find('strong') else False
-        if new_speaker:
-            speaker_name = tag.find('strong').text[:-1].lower()
-        else:
-            new_speaker = True if tag.find('b') else False
-            if new_speaker:
-                speaker_name = tag.find('b').text[:-1].lower()
-
-        return new_speaker, speaker_name
-
-    def format_text(tag):
-
-        # Remove html tags
-        text = scraper_util.stringify_soup(tag)
-
-        # Remove things inside brackets. e.g. [applause], [laughter]
-        pattern = '\s\[.*?\]\s'
-        import re
-        text = re.sub(pattern, '', text)
-
-        # Remove all characters up to first ':'.
-        text = re.sub('.*:', '', text)
-
-        # Replace new line characters with ' '
-        text = re.sub('\n', ' ', text)
-
-        return text
-
     # def is_moderator_definition(tag):
     #     if tag.find('strong').text[:-1].lower() == "moderator":
     #     tag.find_all('strong').next_sibling()
@@ -66,6 +86,7 @@ def extract_transcript_text(link):
     #         print(hit.strip())
     #
     #     tag.find('br').next_sibling.next_sibling
+    ###########################################
 
 # %%
 
@@ -90,12 +111,10 @@ def extract_transcript_text(link):
     while current_tag_index < len(text_tags):
 
         current_tag = text_tags[current_tag_index]
-        print(current_tag)
 
         if skip_tag(current_tag):
             current_tag_index += 1
             continue
-
 
         # Speaker only changes when a 'strong' text occurs.
         # This should be turned into a function that returns (new_speaker_boolean, new_speaker_name)
