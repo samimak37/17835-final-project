@@ -1,3 +1,5 @@
+import scripts.parser.cleaning_pre_2008 as cleaning
+
 class Speaker:
     """
     Stores the information and text of a participant in a debate
@@ -65,8 +67,15 @@ class DebatePre2008:
 
                     self.speakers[current_speaker].text.append(current_text)
 
-                # Keep track of the new speaker and text
-                current_speaker = line.split(':')[0]
+                
+                # Check if the detected "speaker" has a reasonable length and remove false positives
+                speaker = line.split(':')[0]
+                if len(speaker) > 30 or speaker in cleaning.non_speakers:
+                    current_text += line
+                    continue
+
+                # Otherwise keep track of the new speaker and text
+                current_speaker = speaker
                 current_text = line.split(':')[1]
 
                 continue
@@ -74,3 +83,10 @@ class DebatePre2008:
             # If the line doesn't have :, assume that the old speaker is still speaking
             else:
                 current_text += line
+
+
+        # If the dictionary is not empty, we can stop here
+        if len(self.speakers) > 0:
+            return
+
+        
