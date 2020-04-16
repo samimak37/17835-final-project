@@ -8,7 +8,7 @@ class Speaker:
         self.text = list()
 
 
-class Debate:
+class DebatePre2008:
     """
     Stores the information about a specific debate
     """
@@ -74,6 +74,3 @@ class Debate:
             # If the line doesn't have :, assume that the old speaker is still speaking
             else:
                 current_text += line
-
-        print(self.speakers['BUSH'].text)
-
