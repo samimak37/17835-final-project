@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 # Functions to parse the text in an individual transcript.
 #######################
 
+
 # Helper function
 # Returns all the text from a bs4 soup object
 def stringify_soup(soup):
@@ -18,6 +19,7 @@ def stringify_soup(soup):
 
     return text
 
+
 # Helper function
 # Gets only the words spoken by participants
 def format_text(tag):
@@ -26,8 +28,12 @@ def format_text(tag):
     text = stringify_soup(tag)
 
     # Remove things inside brackets. e.g. [applause], [laughter]
-    pattern = '\s\[.*?\]\s'
-    text = re.sub(pattern, '', text)
+    pattern = '\s*\[.*?\]\s*'
+    text = re.sub(pattern, ' ', text)
+
+    # Remove things inside parentheses. e.g. (applause), (laughter) (crosstalk)
+    pattern = '\s*\(.*?\)\s*'
+    text = re.sub(pattern, ' ', text)
 
     # Remove all characters up to first ':'.
     text = re.sub('.*:', '', text)
@@ -37,22 +43,40 @@ def format_text(tag):
 
     return text
 
+
 # Helper function
 # Determines whether a tag should be skipped while parsing
-def skip_tag(tag):
+def skip_tag(tag, tag_index):
+
+    watch_words = ["participants", "candidates"]
+
+    # We don't want to include the list of moderators that happens
+    # at the beginning of these transcripts.
+    if tag_index < 2:
+        watch_words.extend(['moderator', 'moderators'])
+
+    watch_words.extend([word + ":" for word in watch_words])
+
     try:
-        if tag.find('strong').text == 'PARTICIPANTS:':
+        if tag.find('strong').text.lower() in watch_words:
             return True
     except AttributeError:
         pass
 
     try:
-        if tag.find('b').text == 'PARTICIPANTS:':
+        if tag.find('b').text.lowr() in watch_words:
+            return True
+    except AttributeError:
+        pass
+
+    try:
+        if tag.text.lower() in ["(laughter)", "(crosstalk)"]:
             return True
     except AttributeError:
         pass
 
     return False
+
 
 # Helper function
 # Determines whether there is a new speaker, and returns the name of the speaker if so,
@@ -61,16 +85,22 @@ def is_new_speaker(tag):
     speaker_name = ""
     new_speaker = True if tag.find('strong') else False
     if new_speaker:
-        speaker_name = tag.find('strong').text[:-1].lower()
+        speaker_name = tag.find('strong').text.lower()
+
+        if speaker_name:
+            speaker_name = speaker_name[:-1] if speaker_name[-1] == ":" else speaker_name
     else:
         new_speaker = True if tag.find('b') else False
         if new_speaker:
-            speaker_name = tag.find('b').text[:-1].lower()
+            speaker_name = tag.find('b').text.lower()
+            speaker_name = speaker_name[:-1] if speaker_name[-1] == ":" else speaker_name
 
+    pattern = '\s*\(\?\)\s*' # Remove question marks after speaker's name.
+    speaker_name = re.sub(pattern, ' ', speaker_name)
     return new_speaker, speaker_name
 
-def extract_transcript_text(link):
 
+def extract_transcript_text(link):
     """
     Parse text of a transcript.
     :param link: Link to the transcript document
@@ -79,20 +109,13 @@ def extract_transcript_text(link):
     In each tuple, the first element is the speaker (e.g. transcript_text[i][0]), and
      the second element is the text (e.g. transcript_text[i][1]).
     """
-    # def is_moderator_definition(tag):
-    #     if tag.find('strong').text[:-1].lower() == "moderator":
-    #     tag.find_all('strong').next_sibling()
-    #     for hit in tag.findAll():
-    #         print(hit.strip())
-    #
-    #     tag.find('br').next_sibling.next_sibling
-    ###########################################
 
 # %%
 
     # Debugging
-    link = "https://www.presidency.ucsb.edu/documents/democratic-candidates-forum-drake-university-des-moines-iowa"
-    #
+    # link = "https://www.presidency.ucsb.edu/documents/democratic-candidates-forum-drake-university-des-moines-iowa"
+    # link = "https://www.presidency.ucsb.edu/documents/republican-presidential-candidates-debate-the-ronald-reagan-library-and-museum-simi-valley"
+    # link = "https://www.presidency.ucsb.edu/documents/republican-candidates-debate-las-vegas-nevada-0"
 
     with urllib.request.urlopen(link) as response:
         transcript_html = response.read()
@@ -102,27 +125,28 @@ def extract_transcript_text(link):
     # Get the text of the debate
     text_tags = transcript_soup.find(class_='field-docs-content').findAll('p')
 
+    # Thing we are returning. Will be a list of tuples t, where
+    # the ith element corresponds to ith 'text block', where a text block
+    # is defined as speech that is spoken consequtively by the same person.
+    # t[i][0] will be the candidate name, and t[i][1] will be the text being spoken.
+
     text_blocks_list = []
 
     current_block_text = ""
     current_block_speaker = ""
 
-    current_tag_index = 12
+    current_tag_index = 0
     while current_tag_index < len(text_tags):
 
         current_tag = text_tags[current_tag_index]
 
-        if skip_tag(current_tag):
+        if skip_tag(current_tag, current_tag_index):
             current_tag_index += 1
             continue
 
         # Speaker only changes when a 'strong' text occurs.
         # This should be turned into a function that returns (new_speaker_boolean, new_speaker_name)
         new_speaker, new_speaker_name = is_new_speaker(current_tag)
-
-        if new_speaker_name in ['moderator' or 'moderators']:
-            current_tag_index += 1
-            continue
 
         # Get the text spoken by the current speaker
         current_tag_text = format_text(current_tag)
@@ -142,5 +166,26 @@ def extract_transcript_text(link):
 
         current_tag_index += 1
 
-# %%
-    return text_blocks_list
+    text_blocks_list.append((current_block_speaker, current_block_text))
+
+    # Sometimes for whatever reason the same person will speak consecutively but
+    # will be given a new 'block' in the transcript.
+    # We will fix this here.
+    new_text_blocks_list = []
+
+    current_text = ""
+    current_speaker = text_blocks_list[0][0]
+
+    for new_speaker, new_text in text_blocks_list:
+
+        if current_speaker != new_speaker:
+            new_text_blocks_list.append((current_speaker, current_text))
+
+            current_speaker = new_speaker
+            current_text = new_text
+        else:
+            current_text = current_text + new_text
+
+    new_text_blocks_list.append((current_speaker, current_text))
+
+    return new_text_blocks_list

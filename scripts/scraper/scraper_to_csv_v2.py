@@ -52,18 +52,17 @@ current_party_type = None
 current_election_cycle = None
 # %%
 # Iterate over rows from the link.
-for i, body_row in enumerate(body_rows[40:]):
+for i, body_row in enumerate(body_rows):
 
     body_row_text = body_row.find_all(text=True, recursive=True)
 
-    # debugging
+    # debugging:
     # if i == 30:
     #     break
-    ##
+    #
     # i = 47
     # body_row = body_rows[i]
-
-    # Debugging
+    # /debugging
 
     print(str(i+1) + " rows out of " + str(len(body_rows)) + " scraped.")
 
