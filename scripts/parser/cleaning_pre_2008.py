@@ -75,7 +75,7 @@ non_speakers_colon = {
 titles = {
     'MR',
     'MS',
-    'MRS'
+    'MRS',
 }
 
 non_speakers_period = {
