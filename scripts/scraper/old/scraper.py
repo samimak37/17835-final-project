@@ -4,7 +4,7 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from scripts.scraper import scraper_util
+from scripts.scraper.old import scraper_util
 
 UCSB_SITE = 'https://www.presidency.ucsb.edu/documents/presidential-documents-archive-guidebook/presidential-candidates-debates-1960-2016'
 LINK_FILE = 'transcript_links.txt'
