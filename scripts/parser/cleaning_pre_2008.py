@@ -1,4 +1,4 @@
-non_speakers = {
+non_speakers_colon = {
             'And one personal note', 
             'Another issue in this campaign', 
             'Now to the candidates', 
@@ -71,3 +71,47 @@ non_speakers = {
             'MODERATOR',
             'MODERATORS'
         }
+
+titles = {
+    'MR',
+    'MS',
+    'MRS'
+}
+
+non_speakers_period = {
+    "Next thing",
+    "That's a mistake",
+    'My question to you is',
+    "China-U",
+    "Medicare is different",
+    " Hume",
+    "Not this President",
+    "Smiley",
+    "Now, neighborhood schools",
+    "God bless",
+    "This is America",
+    "Thank you",
+    "It's fascinating",
+    "Future U",
+    "Ed",
+    "You bet",
+    "There's a difference",
+    "U",
+    "Now, leadership",
+    "Thank you, sir",
+    "My question to you is",
+    "Excuse me, Carole",
+    "One final point",
+    "Mr Perot?",
+    "Tumulty",
+    "Gentlemen, again, welcome",
+    "He's proposed $2",
+    "THE",
+    "Kilgore",
+    "Support for U",
+    "Gentlemen, good evening",
+    "I—let me finish",
+    "First, Mr President",
+    "This side",
+    "We are helping",
+}
