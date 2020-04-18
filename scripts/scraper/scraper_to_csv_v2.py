@@ -1,39 +1,19 @@
+"""
+Per-candidate resolution scraper from transcripts on and after 2008
+"""
+
 import urllib.request
 import os
-from scripts.scraper import scraper_util
 from bs4 import BeautifulSoup
 import pandas as pd
-import numpy as np
+from scripts.scraper import scrape_a_transcript
 
 UCSB_SITE = 'https://www.presidency.ucsb.edu/documents/presidential-documents' \
             '-archive-guidebook/presidential-candidates-debates-1960-2016'
 OUTPUT_DIRECTORY = "../../data/"
-OUTPUT_FILE = "debate_transcripts_v3.csv"
+OUTPUT_FILE = "debate_transcripts_by_candidate_after2008_v1.csv"
 
-
-def extract_transcript_text(link):
-
-    with urllib.request.urlopen(link) as response:
-        transcript_html = response.read()
-
-    transcript_soup = BeautifulSoup(transcript_html, 'html.parser')
-
-    # Get the title for the transcript
-    title_tag = transcript_soup.find(class_='field-ds-doc-title').contents[1]
-    title = title_tag.contents[0]
-
-    # Pull the date of the debate from the file
-    date_tag = transcript_soup.find(class_='field-docs-start-date-time').contents[1]
-    date = date_tag['content']
-
-    # Get the text of the debate
-    text_tags = transcript_soup.find(class_='field-docs-content').contents
-    text = ''
-    for tag in text_tags:
-        text += scraper_util.stringify_soup(tag)
-
-    return text
-
+# %%
 
 if not os.path.exists(OUTPUT_DIRECTORY):
     os.makedirs(OUTPUT_DIRECTORY)
@@ -59,7 +39,9 @@ csv_column_names = ['election_cycle', # Election year. Unique for each set of de
                    'dem_debate_num', #  Total number debates for the democratic primary election so far in this election cycle
                    'rep_debate_num', #  Total number debates for the republican primary election so far in this election cycle
                    'link', # Link to transcript
-                   'text' # Transcript text.
+                   'block_num', # Block number, indicating how far thru a particular speech we are.
+                   'speaker', # Speaker name
+                   'text' # Speaker text. All text spoken consecutively by the speaker, thus forming a 'block'.
                 ]
 
 
@@ -68,23 +50,21 @@ csv_rows = [] # List of dictionaries to be converted to a dataframe.
 current_election_type = None
 current_party_type = None
 current_election_cycle = None
-
+# %%
 # Iterate over rows from the link.
 for i, body_row in enumerate(body_rows):
 
     body_row_text = body_row.find_all(text=True, recursive=True)
 
-    # debugging
+    # debugging:
     # if i == 30:
     #     break
-    ##
+    #
+    # i = 47
+    # body_row = body_rows[i]
+    # /debugging
 
-    # Debugging
     print(str(i+1) + " rows out of " + str(len(body_rows)) + " scraped.")
-
-    csv_row = {}
-    for csv_column_name in csv_column_names:
-        csv_row[csv_column_name] = None
 
     ##################################################
     # EXTRACT META INFORMATION
@@ -99,6 +79,12 @@ for i, body_row in enumerate(body_rows):
     # Tags with 'xl69' uniquly identify the election_cycle.
     if body_row.find(class_="xl69"):
         current_election_cycle = body_row.find(class_="xl69").find(text=True)
+
+        # # Parser only works properly for years on or after 2008.
+        # print(current_election_cycle)
+        # print(type(current_election_cycle))
+
+
 
         # If we have a subtag with class 'xl69' but there is no "General" tag
         # we are at or before 1996 election cycle, and we do not have primary transcripts.
@@ -144,9 +130,8 @@ for i, body_row in enumerate(body_rows):
     # Get date of transcript
     debate_date = body_row.find(align="right").find(text=True)
 
-    # Extract transcript text
+    # Get link to transcript
     transcript_link = body_row.a['href']
-    transcript_text = extract_transcript_text(transcript_link)
 
     link_text = body_row.a.text
     if "Debate in the " in link_text:
@@ -168,18 +153,35 @@ for i, body_row in enumerate(body_rows):
     else:
         debate_location = link_text
 
-    csv_row['election_cycle'] = str(current_election_cycle)
-    csv_row['election_type'] = current_election_type
-    csv_row['party'] = current_party_type
-    csv_row['debate_date'] = debate_date
-    csv_row['debate_location'] = debate_location
-    csv_row['link'] = transcript_link
-    csv_row['text'] = transcript_text
+    # Scraper only works properly for 2008 and after
+    if current_election_cycle and int(str(current_election_cycle)) < 2008:
+        break
 
-    csv_rows.append(csv_row)
+    # Call helper function
+    transcript_text_block_list = scrape_a_transcript.extract_transcript_text(transcript_link)
+
+    for block_num, (speaker_name, speaker_text) in enumerate(transcript_text_block_list):
+        # For each text block, make a new row in the dataframe.
+
+        csv_row = {}
+        for csv_column_name in csv_column_names:
+            csv_row[csv_column_name] = None
+
+        csv_row['election_cycle'] = str(current_election_cycle)
+        csv_row['election_type'] = current_election_type
+        csv_row['party'] = current_party_type
+        csv_row['debate_date'] = debate_date
+        csv_row['debate_location'] = debate_location
+        csv_row['link'] = transcript_link
+        csv_row['block_num'] = block_num+1
+        csv_row['text'] = speaker_text
+        csv_row['speaker'] = speaker_name
+
+        csv_rows.append(csv_row)
 
 # Convert the scraped data to dataframe.
 transcript_df_save = pd.DataFrame(csv_rows)
+
 
 # %%
 #####################################
@@ -188,81 +190,71 @@ transcript_df_save = pd.DataFrame(csv_rows)
 
 transcript_df = transcript_df_save.copy()
 
+# Get debate counts for each type of debate during each election cycle
+# ref:
+# https://stackoverflow.com/questions/41750916/combined-two-dataframe-based-on-index-replacing-matching-values-in-other-column
+# https://stackoverflow.com/questions/24768657/replace-column-values-based-on-another-dataframe-python-pandas-better-way
 
-transcript_df['general_debate_num'] = np.where(
-        transcript_df['party'] == "Both Parties",
-        transcript_df.groupby(['election_cycle', 'party']).cumcount(ascending=False)+1,
-        np.NAN
-)
+####################################
+# General
 
-transcript_df['dem_debate_num'] = np.where(
-        transcript_df['party'] == "Democratic Party",
-        transcript_df.groupby(['election_cycle', 'party']).cumcount(ascending=False)+1,
-        np.NAN
-)
+generals_debates = transcript_df['party'] == "Both Parties"
+general_debates_df = transcript_df.loc[generals_debates]
+x = ((general_debates_df['debate_date'] != general_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+x = x.to_frame()
+general_debate_nums = x.rename(columns={"debate_date": "general_debate_num"})
 
-transcript_df['rep_debate_num'] = np.where(
-        transcript_df['party'] == "Republican Party",
-        transcript_df.groupby(['election_cycle', 'party']).cumcount(ascending=False)+1,
-        np.NAN
-)
+transcript_df.loc[generals_debates, 'general_debate_num'] = \
+    general_debate_nums[['general_debate_num']].values
 
-# Fill in total_dem_debate_num and total_rep_debate_num
+####################################
+# Democrats
 
-transcript_df_dem = transcript_df.copy()
-transcript_df_dem = transcript_df_dem[transcript_df_dem['party'] != "Republican Party"]
-transcript_df_dem = transcript_df_dem.drop("total_rep_debate_num", 1)
+democrat_debates = transcript_df['party'] == "Democratic Party"
+democrat_debates_df = transcript_df.loc[democrat_debates]
+x = ((democrat_debates_df['debate_date'] != democrat_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+x = x.to_frame()
+democrat_debate_nums = x.rename(columns={"debate_date": "dem_debate_num"})
 
-transcript_df_dem['total_dem_debate_num'] = transcript_df_dem.groupby('election_cycle').cumcount(ascending=False)+1
+transcript_df.loc[democrat_debates, 'dem_debate_num'] = \
+    democrat_debate_nums[['dem_debate_num']].values
 
-transcript_df_rep = transcript_df.copy()
-transcript_df_rep = transcript_df_rep[transcript_df_rep['party'] != "Democratic Party"]
-transcript_df_rep = transcript_df_rep.drop("total_dem_debate_num", 1)
+####################################
+# Republicans
 
-transcript_df_rep['total_rep_debate_num'] = transcript_df_rep.groupby('election_cycle').cumcount(ascending=False)+1
+republican_debates = transcript_df['party'] == "Republican Party"
+republican_debates_df = transcript_df.loc[republican_debates]
+x = ((republican_debates_df['debate_date'] != republican_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+x = x.to_frame()
+republican_debate_nums = x.rename(columns={"debate_date": "rep_debate_num"})
 
-new_transcript_df = pd.concat([transcript_df_rep, transcript_df_dem], sort=True)
+transcript_df.loc[republican_debates, 'rep_debate_num'] = \
+    republican_debate_nums[['rep_debate_num']].values
 
-new_transcript_df = new_transcript_df[csv_column_names]
+####################################
+# Republicans or General
+rep_total_debates = republican_debates | generals_debates
+rep_total_debates_df = transcript_df.loc[rep_total_debates]
+x = ((rep_total_debates_df['debate_date'] != rep_total_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+x = x.to_frame()
+rep_total_debate_nums = x.rename(columns={"debate_date": "total_rep_debate_num"})
 
-new_transcript_df = new_transcript_df.sort_index()
+transcript_df.loc[rep_total_debates, 'total_rep_debate_num'] = \
+    rep_total_debate_nums[['total_rep_debate_num']].values
 
-#######################
-#######################
-# A really bad/hacky way to combine the debate_cycle num information
-# for the nearly duplicate rows (e.g. the general election rows)
+####################################
+# Democrats or General
+dem_total_debates = democrat_debates | generals_debates
+dem_total_debates_df = transcript_df.loc[dem_total_debates]
+x = ((dem_total_debates_df['debate_date'] != dem_total_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+x = x.to_frame()
+total_dem_debate_nums = x.rename(columns={"debate_date": "total_dem_debate_num"})
 
-action = {"replace_next": False, "'column_name":None, "val": None}
+transcript_df.loc[dem_total_debates, 'total_dem_debate_num'] = \
+    total_dem_debate_nums[['total_dem_debate_num']].values
 
-index = 0
-for x, row in new_transcript_df.iterrows():
-
-    if not action['replace_next']:
-        if row['election_type'] == "General Election" or row['election_type'] == "General":
-            action['replace_next'] = True
-            if not np.isnan(row['total_rep_debate_num']):
-                action['val'] = row['total_rep_debate_num']
-                action['column_name'] = 'total_rep_debate_num'
-            else:
-                action['val'] = row['total_dem_debate_num']
-                action['column_name'] = 'total_dem_debate_num'
-    else:
-        row[action['column_name']] = action['val']
-        new_transcript_df.iloc[index] = row
-        action['replace_next'] = False
-    index += 1
-
-final_transcript_df = new_transcript_df[
-         (
-             ~(new_transcript_df['total_dem_debate_num'].isnull()) &
-             ~(new_transcript_df['total_rep_debate_num'].isnull()) &
-             (new_transcript_df['party'] == "Both Parties")
-          )
-            |
-         (new_transcript_df['party'] != "Both Parties")
-    ]
-#######################
-#######################
+####################################
+####################################
 
 # Save to data frame.
-final_transcript_df.to_csv(OUTPUT_DIRECTORY + OUTPUT_FILE, index=False)
+transcript_df.to_csv(OUTPUT_DIRECTORY + OUTPUT_FILE, index=False)
