@@ -4,3 +4,7 @@ venv/
 __pycache__/
 *.txt
 .idea/
+Pipfile
+Pipfile.lock
+*.py~
+.DS_Store
