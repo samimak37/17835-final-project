@@ -69,7 +69,7 @@ non_speakers_colon = {
             'The measurement is not',
             'PARTICIPANTS',
             'MODERATOR',
-            'MODERATORS'
+            'MODERATORS',
         }
 
 titles = {

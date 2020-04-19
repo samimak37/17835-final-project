@@ -1,5 +1,5 @@
 """
-Per-candidate resolution scraper from transcripts on and after 2008
+Per-candidate resolution scraper from transcripts.
 """
 
 import urllib.request
@@ -11,7 +11,7 @@ from scripts.scraper import scrape_a_transcript
 UCSB_SITE = 'https://www.presidency.ucsb.edu/documents/presidential-documents' \
             '-archive-guidebook/presidential-candidates-debates-1960-2016'
 OUTPUT_DIRECTORY = "../../data/"
-OUTPUT_FILE = "debate_transcripts_by_candidate_after2008_v1.csv"
+OUTPUT_FILE = "debate_transcripts_by_candidate_ordered_v1.csv"
 
 # %%
 
@@ -52,14 +52,14 @@ current_party_type = None
 current_election_cycle = None
 # %%
 # Iterate over rows from the link.
+# for i, body_row in enumerate(body_rows):
 for i, body_row in enumerate(body_rows):
 
     body_row_text = body_row.find_all(text=True, recursive=True)
 
     # debugging:
-    # if i == 30:
+    # if i == 5:
     #     break
-    #
     # i = 47
     # body_row = body_rows[i]
     # /debugging
@@ -148,11 +148,12 @@ for i, body_row in enumerate(body_rows):
         debate_location = link_text
 
     # Scraper only works properly for 2008 and after
-    if current_election_cycle and int(str(current_election_cycle)) < 2008:
-        break
+    # if current_election_cycle and int(str(current_election_cycle)) < 2008:
+    #     break
 
     # Call helper function
-    transcript_text_block_list = scrape_a_transcript.extract_transcript_text(transcript_link)
+    year = int(current_election_cycle.encode('utf-8'))
+    transcript_text_block_list = scrape_a_transcript.extract_transcript_text(transcript_link, year)
 
     for block_num, (speaker_name, speaker_text) in enumerate(transcript_text_block_list):
         # For each text block, make a new row in the dataframe.
@@ -161,7 +162,7 @@ for i, body_row in enumerate(body_rows):
         for csv_column_name in csv_column_names:
             csv_row[csv_column_name] = None
 
-        csv_row['election_cycle'] = str(current_election_cycle)
+        csv_row['election_cycle'] = str(year)
         csv_row['election_type'] = current_election_type
         csv_row['party'] = current_party_type
         csv_row['debate_date'] = debate_date
