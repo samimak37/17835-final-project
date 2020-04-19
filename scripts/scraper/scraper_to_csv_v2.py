@@ -80,12 +80,6 @@ for i, body_row in enumerate(body_rows):
     if body_row.find(class_="xl69"):
         current_election_cycle = body_row.find(class_="xl69").find(text=True)
 
-        # # Parser only works properly for years on or after 2008.
-        # print(current_election_cycle)
-        # print(type(current_election_cycle))
-
-
-
         # If we have a subtag with class 'xl69' but there is no "General" tag
         # we are at or before 1996 election cycle, and we do not have primary transcripts.
         # So all debates going forward are "General"
