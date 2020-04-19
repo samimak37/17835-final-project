@@ -2,26 +2,31 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 data = pd.read_csv("../../data/debate_transcripts_v3_sentiment.csv")
-select_cycle = data[data["election_cycle"] == 2016]
-print(select_cycle)
 
-fig, ax1 = plt.subplots()
+years = [2008, 2012, 2016]
 
-color = 'tab:red'
-ax1.set_xlabel('Debates in the 2016 Election Cycle')
-ax1.set_ylabel('Polarity', color=color)
-ax1.plot(select_cycle["polarity"], color=color)
-ax1.tick_params(axis='y', labelcolor=color)
+for y in years:
+    select_cycle = data[data["election_cycle"] == y]
+    print(select_cycle)
 
-ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    fig, ax1 = plt.subplots()
 
-color = 'tab:blue'
-ax2.set_ylabel('Subjectivity', color=color)  # we already handled the x-label with ax1
-ax2.plot(select_cycle["subjectivity"], color=color)
-ax2.tick_params(axis='y', labelcolor=color)
+    color = 'tab:red'
+    ax1.set_xlabel('Debates in the '+str(y)+' Election Cycle')
+    ax1.set_ylabel('Polarity', color=color)
+    ax1.plot(select_cycle["polarity"], color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
 
-fig.tight_layout()  # otherwise the right y-label is slightly clipped
-print(plt.xticks())
-plt.savefig('../../plots/2016-election-trends.png')
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
-plt.show()
+    color = 'tab:blue'
+    ax2.set_ylabel('Subjectivity', color=color)  # we already handled the x-label with ax1
+    ax2.plot(select_cycle["subjectivity"], color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    plt.title("Subjectivity and Polarity in over "+str(y)+" Elections")
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    print(plt.xticks())
+    plt.savefig('../../plots/'+str(y)+'-election-trends.png')
+
+    plt.show()

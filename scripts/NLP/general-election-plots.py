@@ -23,6 +23,7 @@ ax2.set_ylabel('Subjectivity', color=color)  # we already handled the x-label wi
 ax2.plot(by_cycle_subjectivity, color=color)
 ax2.tick_params(axis='y', labelcolor=color)
 
+plt.title("Subjectivity and Polarity in General Elections")
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 print(plt.xticks())
 plt.savefig('../../plots/general_election_cycle_means.png')
