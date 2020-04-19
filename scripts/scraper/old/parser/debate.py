@@ -1,4 +1,4 @@
-import scripts.parser.cleaning_pre_2008 as cleaning
+import scripts.scraper.old.parser.cleaning_pre_2008 as cleaning
 
 class Speaker:
     """

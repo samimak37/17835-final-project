@@ -1,8 +1,7 @@
 import pandas as pd
 from pathlib import Path
-import numpy as np
 
-from scripts.parser.debate import DebatePre2008
+from scripts.scraper.old.parser.debate import DebatePre2008
 
 TRANSCRIPT_CSV = Path('data', 'debate_transcripts_v3.csv')
 OUTPUT_CSV = Path('data', 'debate_transcripts_by_candidate_before2008.csv')
