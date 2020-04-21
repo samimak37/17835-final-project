@@ -31,5 +31,5 @@ ax2.tick_params(axis='y', labelcolor=color)
 plt.title("Hillary Clinton: Subjectivity and Polarity")
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 print(plt.xticks())
-plt.savefig('../../plots/trump_sentiment.png')
+plt.savefig('../../plots/clinton_sentiment.png')
 plt.show()
