@@ -24,7 +24,7 @@ for y in years:
     ax2.plot(select_cycle["subjectivity"], color=color)
     ax2.tick_params(axis='y', labelcolor=color)
 
-    plt.title("Subjectivity and Polarity in over "+str(y)+" Elections")
+    plt.title("Subjectivity and Polarity over "+str(y)+" Election Cycle")
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     print(plt.xticks())
     plt.savefig('../../plots/'+str(y)+'-election-trends.png')
