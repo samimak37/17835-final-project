@@ -1,3 +1,6 @@
+
+# Description: K-means and document-word analysis.
+
 # ref: https://javewa.github.io/2018/08/14/trolls/
 library(tidyverse)
 library(syuzhet)
