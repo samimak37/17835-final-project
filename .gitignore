@@ -8,3 +8,4 @@ Pipfile
 Pipfile.lock
 *.py~
 .DS_Store
+.Rproj.user
