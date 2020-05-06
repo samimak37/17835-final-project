@@ -16,17 +16,40 @@ df$debate_date <- mdy(df$debate_date)
 # Group by debate date
 ##########################################
 
-df_by_debate <- df %>% group_by(debate_date) %>% summarise(text = paste0(text, collapse=""))
+df_by_debate <- df %>% group_by(debate_date) %>% summarise(text = paste0(text, collapse=""),  party=party[1])
 df_by_debate['syuzhet_sentiment'] <- get_sentiment(df_by_debate$text, method="syuzhet")
 
-ggplot(df_by_debate, aes(x=df_by_debate$debate_date, y=df_by_debate$syuzhet_sentiment)) +
-  geom_line()
+ggplot(df_by_debate, aes(x=debate_date, y=syuzhet_sentiment, color=party)) +
+  geom_point() +
+  labs(x= "Debate Debate", y="Sentiment (Syuzhet)", title="Sentiment of Debates 2000 and After") +
+  theme_linedraw() +
+  geom_smooth(method='lm', color='black', se=FALSE) +
+  scale_colour_manual("Party", values=list("Republican Party"="Red", "Democratic Party"="Blue", "Both Parties"="Purple"))
 
-df_by_debate_after1999 <- df %>% filter(election_cycle >= 2000)  %>% group_by(debate_date) %>% summarise(text = paste0(text, collapse=""))
+
+
+df_by_debate_after1999 <- df %>% filter(election_cycle >= 2000)  %>% group_by(debate_date) %>% summarise(text = paste0(text, collapse=""), party=party[1])
 df_by_debate_after1999['syuzhet_sentiment'] <- get_sentiment(df_by_debate_after1999$text, method="syuzhet")
 
-ggplot(df_by_debate_after1999, aes(x=debate_date, y=syuzhet_sentiment)) +
-  geom_line()
+
+my_lm <- lm(df_by_debate_after1999$syuzhet_sentiment ~ df_by_debate_after1999$debate_date)
+lm_sum <- summary(my_lm)
+p_value_1999 <- lm_sum$coefficients[2,4]
+
+tiff(filename=paste0("../../plots/sentiment_2000_and_after.png"),
+     units="in", width=5, height=5, res=150)
+
+ggplot(df_by_debate_after1999, aes(x=debate_date, y=syuzhet_sentiment, color=party)) +
+  geom_point() +
+  labs(x= "Debate Debate", y="Sentiment (Syuzhet)", title="Sentiment of Debates in 2000 and After") +
+  theme_linedraw() +
+  geom_smooth(method='lm', color='black', se=FALSE) +
+  scale_colour_manual("Party", values=list("Republican Party"="Red", "Democratic Party"="Blue", "Both Parties"="Purple")) +
+  annotate(geom="text", x=as.Date("2014-10-05"), y=Inf, label=paste0("Slope p-value: ", round(p_value_1999, 4)),
+           color="black", vjust=2, hjust=1)
+dev.off()
+
+
 
 ####### Word Clouds
 
@@ -35,7 +58,8 @@ by_debate_dfm <- dfm(by_debate_corpus, remove = stopwords("english"), remove_num
 
 dir.create(file.path("../../plots/word_clouds/by_debate/"), showWarnings = FALSE)
 for (doc_name in as.character(df_by_debate$debate_date)) {
-  png(filename=paste0("../../plots/word_clouds/by_debate/", doc_name, "_word_cloud.png"))
+  tiff(paste0("../../plots/word_clouds/by_debate/", doc_name, "_word_cloud.png"),
+       units="in", width=5, height=5, res=150)
   textplot_wordcloud(by_debate_dfm[doc_name, ], max_words = 100, color = rev(RColorBrewer::brewer.pal(10, "RdBu")))
   dev.off()
 }
@@ -82,7 +106,8 @@ by_cycle_dfm <- dfm(by_cycle_corpus, remove = stopwords("english"), remove_numbe
 
 dir.create(file.path("../../plots/word_clouds/by_election_cycle/"), showWarnings = FALSE)
 for (doc_name in as.character(df_by_cycle$election_cycle)) {
-  png(filename=paste0("../../plots/word_clouds/by_election_cycle/", doc_name, "_word_cloud.png"))
+  tiff(paste0("../../plots/word_clouds/by_election_cycle/", doc_name, "_word_cloud.png"),
+      units="in", width=5, height=5, res=150)
   textplot_wordcloud(by_cycle_dfm[doc_name, ], max_words = 100, color = rev(RColorBrewer::brewer.pal(10, "RdBu")))
   dev.off()
 }

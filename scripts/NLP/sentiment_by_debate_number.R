@@ -53,9 +53,8 @@ for (method in c("syuzhet", "bing", "afinn", "nrc")) {
   inter_p <- inter_summary$coefficients[3,4]
   
   
-  tiff(paste0("../../plots/sentiment_over_cycle/primary_sentiment_over_cycle_", method, "_method.png"), 
-       units="in", width=5, height=5, res=300)
-  
+  tiff(filename=paste0("../../plots/sentiment_over_cycle/primary_sentiment_over_cycle_", method, "_method.png"),
+      units="in", width=5, height=5, res=150)
   p <- ggplot(data=df, aes(x=debate_num, y=measurement, color=party)) +
         geom_point() +
         geom_smooth(method="lm", se=FALSE) +
@@ -73,10 +72,7 @@ for (method in c("syuzhet", "bing", "afinn", "nrc")) {
   print(p)
   dev.off()
   
-  # png(filename=paste0("../../plots/sentiment_over_cycle/general_sentiment_over_cycle_", method, "_method.png"))
-  tiff(paste0("../../plots/sentiment_over_cycle/general_sentiment_over_cycle_", method, "_method.png"), 
-       units="in", width=5, height=5, res=300)
-  
+
   df_by_dnum_both_parties <- original_df %>% filter(party=="Both Parties") %>% 
     group_by(debate_date) %>% 
     summarise(text = paste0(text, collapse=""), general_debate_num=general_debate_num[1]) %>%
@@ -85,6 +81,8 @@ for (method in c("syuzhet", "bing", "afinn", "nrc")) {
     summarise(mean_sentiment_both = mean(sentiment))
   
   
+  tiff(filename=paste0("../../plots/sentiment_over_cycle/general_sentiment_over_cycle_", method, "_method.png"),
+       units="in", width=5, height=5, res=150)
   p <- ggplot(data=df_by_dnum_both_parties, aes(x=general_debate_num, y=mean_sentiment_both)) +
     geom_point(color="Purple", size=5) +
     labs(x="Number of General Debates Through a Cycle", 
