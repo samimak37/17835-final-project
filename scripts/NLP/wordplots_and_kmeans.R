@@ -6,7 +6,8 @@ library(tidyverse)
 library(syuzhet)
 library(lubridate)
 library(RColorBrewer)
-
+library(readtext)
+library(quanteda)
 
 df <- read.csv("../../data/debate_transcripts_by_candidate_ordered_v1.csv")
 df$debate_date <- mdy(df$debate_date)
@@ -16,13 +17,13 @@ df$debate_date <- mdy(df$debate_date)
 ##########################################
 
 df_by_debate <- df %>% group_by(debate_date) %>% summarise(text = paste0(text, collapse=""))
-
 df_by_debate['syuzhet_sentiment'] <- get_sentiment(df_by_debate$text, method="syuzhet")
 
 ggplot(df_by_debate, aes(x=df_by_debate$debate_date, y=df_by_debate$syuzhet_sentiment)) +
   geom_line()
 
-df_by_debate_after1999 <- df_by_debate %>% filter(election_cycle >= 2000)
+df_by_debate_after1999 <- df %>% filter(election_cycle >= 2000)  %>% group_by(debate_date) %>% summarise(text = paste0(text, collapse=""))
+df_by_debate_after1999['syuzhet_sentiment'] <- get_sentiment(df_by_debate_after1999$text, method="syuzhet")
 
 ggplot(df_by_debate_after1999, aes(x=debate_date, y=syuzhet_sentiment)) +
   geom_line()
@@ -56,12 +57,13 @@ km.out <- stats::kmeans(by_debate_dfm_tfidf, centers = k)
 # colnames(km.out$centers) <- featnames(dfm.tfidf.hamilton)
 
 for (i in 1:k) { # loop for each cluster
-  cat("CLUSTER", i)
-  cat("Top 10 words:") # 10 most important terms at the centroid 
+  print("CLUSTER", i)
+  print("Top 10 words:") # 10 most important terms at the centroid 
   print(head(sort(km.out$centers[i, ], decreasing = TRUE), n = 10)) 
-  cat("Debates classified: ")
+  print("Debates classified: ")
   print(docnames(by_debate_dfm_tfidf)[km.out$cluster == i])
 }
+
 
 ##########################################
 # Group by election cycle
@@ -113,7 +115,6 @@ for (i in 1:k) { # loop for each cluster
 # Group by Party Type
 ##########################################
 
-# TODO!!!
 
 
 

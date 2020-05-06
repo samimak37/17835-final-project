@@ -11,7 +11,7 @@ from scripts.scraper import scrape_a_transcript
 UCSB_SITE = 'https://www.presidency.ucsb.edu/documents/presidential-documents' \
             '-archive-guidebook/presidential-candidates-debates-1960-2016'
 OUTPUT_DIRECTORY = "../../data/"
-OUTPUT_FILE = "debate_transcripts_by_candidate_ordered_v1.csv"
+OUTPUT_FILE = "debate_transcripts_by_candidate_ordered_v2.csv"
 
 # %%
 
@@ -193,60 +193,87 @@ transcript_df = transcript_df_save.copy()
 ####################################
 # General
 
-generals_debates = transcript_df['party'] == "Both Parties"
-general_debates_df = transcript_df.loc[generals_debates]
-x = ((general_debates_df['debate_date'] != general_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
-x = x.to_frame()
-general_debate_nums = x.rename(columns={"debate_date": "general_debate_num"})
+for name, group in transcript_df.groupby('election_cycle'):
 
-transcript_df.loc[generals_debates, 'general_debate_num'] = \
-    general_debate_nums[['general_debate_num']].values
+    generals_debates = group['party'] == "Both Parties"
+    general_debates_df = group.loc[generals_debates]
+    x = ((general_debates_df['debate_date'] != general_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+    x = x.to_frame()
+    general_debate_nums = x.rename(columns={"debate_date": "general_debate_num"})
+
+    group.loc[generals_debates, 'general_debate_num'] = \
+        general_debate_nums[['general_debate_num']].values
+
+    transcript_df[transcript_df['election_cycle'] == name] = group
 
 ####################################
 # Democrats
 
-democrat_debates = transcript_df['party'] == "Democratic Party"
-democrat_debates_df = transcript_df.loc[democrat_debates]
-x = ((democrat_debates_df['debate_date'] != democrat_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
-x = x.to_frame()
-democrat_debate_nums = x.rename(columns={"debate_date": "dem_debate_num"})
+for name, group in transcript_df.groupby('election_cycle'):
 
-transcript_df.loc[democrat_debates, 'dem_debate_num'] = \
-    democrat_debate_nums[['dem_debate_num']].values
+    democrat_debates = group['party'] == "Democratic Party"
+    democrat_debates_df = group.loc[democrat_debates]
+    x = ((democrat_debates_df['debate_date'] != democrat_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+    x = x.to_frame()
+    democrat_debate_nums = x.rename(columns={"debate_date": "dem_debate_num"})
+
+    group.loc[democrat_debates, 'dem_debate_num'] = \
+        democrat_debate_nums[['dem_debate_num']].values
+
+    transcript_df[transcript_df['election_cycle'] == name] = group
 
 ####################################
 # Republicans
 
-republican_debates = transcript_df['party'] == "Republican Party"
-republican_debates_df = transcript_df.loc[republican_debates]
-x = ((republican_debates_df['debate_date'] != republican_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
-x = x.to_frame()
-republican_debate_nums = x.rename(columns={"debate_date": "rep_debate_num"})
+for name, group in transcript_df.groupby('election_cycle'):
 
-transcript_df.loc[republican_debates, 'rep_debate_num'] = \
-    republican_debate_nums[['rep_debate_num']].values
+    republican_debates = group['party'] == "Republican Party"
+    republican_debates_df = group.loc[republican_debates]
+    x = ((republican_debates_df['debate_date'] != republican_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+    x = x.to_frame()
+    republican_debate_nums = x.rename(columns={"debate_date": "rep_debate_num"})
+
+    group.loc[republican_debates, 'rep_debate_num'] = \
+        republican_debate_nums[['rep_debate_num']].values
+
+    transcript_df[transcript_df['election_cycle'] == name] = group
 
 ####################################
 # Republicans or General
-rep_total_debates = republican_debates | generals_debates
-rep_total_debates_df = transcript_df.loc[rep_total_debates]
-x = ((rep_total_debates_df['debate_date'] != rep_total_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
-x = x.to_frame()
-rep_total_debate_nums = x.rename(columns={"debate_date": "total_rep_debate_num"})
 
-transcript_df.loc[rep_total_debates, 'total_rep_debate_num'] = \
-    rep_total_debate_nums[['total_rep_debate_num']].values
+for name, group in transcript_df.groupby('election_cycle'):
+
+    republican_debates = group['party'] == "Republican Party"
+    generals_debates = group['party'] == "Both Parties"
+
+    rep_total_debates = republican_debates | generals_debates
+    rep_total_debates_df = group.loc[rep_total_debates]
+    x = ((rep_total_debates_df['debate_date'] != rep_total_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+    x = x.to_frame()
+    rep_total_debate_nums = x.rename(columns={"debate_date": "total_rep_debate_num"})
+
+    group.loc[rep_total_debates, 'total_rep_debate_num'] = \
+        rep_total_debate_nums[['total_rep_debate_num']].values
+
+    transcript_df[transcript_df['election_cycle'] == name] = group
 
 ####################################
 # Democrats or General
-dem_total_debates = democrat_debates | generals_debates
-dem_total_debates_df = transcript_df.loc[dem_total_debates]
-x = ((dem_total_debates_df['debate_date'] != dem_total_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
-x = x.to_frame()
-total_dem_debate_nums = x.rename(columns={"debate_date": "total_dem_debate_num"})
+for name, group in transcript_df.groupby('election_cycle'):
 
-transcript_df.loc[dem_total_debates, 'total_dem_debate_num'] = \
-    total_dem_debate_nums[['total_dem_debate_num']].values
+    generals_debates = group['party'] == "Both Parties"
+    democrat_debates = group['party'] == "Democratic Party"
+
+    dem_total_debates = democrat_debates | generals_debates
+    dem_total_debates_df = group.loc[dem_total_debates]
+    x = ((dem_total_debates_df['debate_date'] != dem_total_debates_df['debate_date'].shift(1)).cumsum()[::-1]).astype(int)
+    x = x.to_frame()
+    total_dem_debate_nums = x.rename(columns={"debate_date": "total_dem_debate_num"})
+
+    group.loc[dem_total_debates, 'total_dem_debate_num'] = \
+        total_dem_debate_nums[['total_dem_debate_num']].values
+
+    transcript_df[transcript_df['election_cycle'] == name] = group
 
 ####################################
 ####################################
