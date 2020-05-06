@@ -1,7 +1,7 @@
 import urllib.request
 import re
 from bs4 import BeautifulSoup
-import scripts.scraper.cleaning_pre_2008 as cleaning
+import scripts.scraper.cleaning as cleaning
 
 #######################
 # Functions to parse the text in an individual transcript.
