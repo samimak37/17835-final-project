@@ -277,3 +277,4 @@ for name, group in transcript_df.groupby('election_cycle'):
 
 # Save to data frame.
 transcript_df.to_csv(OUTPUT_DIRECTORY + OUTPUT_FILE, index=False)
+
